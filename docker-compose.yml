@@ -1,0 +1,48 @@
+services:
+  db:
+    image: postgres:18.4-alpine3.24
+    environment:
+      POSTGRES_USER_FILE: /run/secrets/db_user
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+      POSTGRES_DB: mydb
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-d", "db_prod"]
+      interval: 30s
+      timeout: 60s
+      retries: 5
+      start_period: 80s 
+    volumes:
+      - ./pg_data:/var/lib/postgresql
+    secrets:
+      - db_user
+      - db_password
+    
+  web:
+
+    build: .
+  
+    volumes:
+      - .:/code
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+    ports:
+      - "8000:8000"
+    command: python manage.py runserver 0.0.0.0:8000
+  worker:
+    build: .
+    volumes:
+      - .:/code
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+    command: sh -c "python manage.py migrate && python manage.py qcluster"
+
+secrets:
+  db_user:
+    file: ./db_user.txt
+  
+  db_password:
+    file: ./db_passowrd.txt
