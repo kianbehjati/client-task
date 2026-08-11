@@ -25,6 +25,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'django_q',
+    "drf_spectacular",
+    ###
+    'client',
 ]
 
 MIDDLEWARE = [
@@ -57,9 +60,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'core.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/6.1/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -71,9 +71,6 @@ DATABASES = {
     }
 }
 
-
-# Password validation
-# https://docs.djangoproject.com/en/6.1/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -90,9 +87,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
-# Internationalization
-# https://docs.djangoproject.com/en/6.1/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
 
@@ -115,7 +109,6 @@ MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "static" / "media"
 
 Q_CLUSTER = {
-   'retry': 5,
    'workers': 4,
    'orm': 'default',
 }
@@ -129,4 +122,11 @@ REST_FRAMEWORK = {
         "anon": "100/hour",
         "user": "1000/hour",
     },
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Client API",
+    "DESCRIPTION": "API documentation",
+    "VERSION": "1.0.0",
 }

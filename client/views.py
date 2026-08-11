@@ -1,3 +1,182 @@
-from django.shortcuts import render
+from .serializer import ClientSerializer,RequestOtpSerializer,VerifyOtpSerializer
+from .models import Client, Otp
 
-# Create your views here.
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.reverse import reverse
+from rest_framework.viewsets import ModelViewSet, GenericViewSet
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework import status
+
+from django.http.response import HttpResponseForbidden, HttpResponse, HttpResponseNotFound
+from django.contrib.auth.decorators import login_required
+from django.core.mail import send_mail
+from django.conf import settings
+from django.db.models import F
+from django.utils import timezone
+from django.contrib.auth import get_user_model, login
+
+import qrcode
+import io
+import hashlib
+import secrets
+from datetime import timedelta
+
+def generate_otp():
+    return f"{secrets.randbelow(1000000):06d}"
+
+def hash_otp(otp):
+    return hashlib.sha256(
+        f"{settings.SECRET_KEY}:{otp}".encode()
+    ).hexdigest()
+
+def send_otp_email(email, otp):
+    send_mail(
+        subject="Your verification code",
+        message=f"Your verification code is: {otp}\n"
+                "This code expires in 5 minutes.",
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[email],
+        fail_silently=True
+    )
+
+class ClientViewSet(ModelViewSet):
+    """
+    /api/Client/<PK> -> Update/Delete Client\n
+    /api/Client -> List Clients
+    """
+    serializer_class = ClientSerializer
+    queryset = Client.objects.all()
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        if self.request.user.is_staff:
+            self.queryset = Client.objects.all()
+        if not self.request.user.is_staff:
+            self.queryset = Client.objects.none()
+        return super().get_queryset()
+    def get_permissions(self):
+        return super().get_permissions()
+
+@login_required(login_url='/login')
+def qr_code(request,pk):
+    if request.user.is_staff:
+        client = Client.objects.filter(id=pk).only('id')
+        if not client.exists():
+            return HttpResponseNotFound("No user was found with this unique ID")
+        else:
+            url = reverse('client-detail',kwargs={"pk":pk},request=request)
+    else:
+        return HttpResponseForbidden()
+
+    qr = qrcode.make(url)
+
+    buffer = io.BytesIO()
+    qr.save(buffer, format="PNG")
+
+
+    return HttpResponse(
+        buffer.getvalue(),
+        content_type="image/png",
+    )
+
+class AuthenticationViewSet(GenericViewSet):
+    serializer_class = RequestOtpSerializer # just to bypass error
+
+    def get_serializer_class(self):
+        if self.action == "request_otp":
+            return RequestOtpSerializer
+
+        if self.action == "verify_otp":
+            return VerifyOtpSerializer
+
+        return super().get_serializer_class()
+    
+    @action(
+        methods= ["post"],
+        detail=False,
+        url_name="request otp",
+        url_path="request-otp"
+    )
+    def request_otp(self, request):
+        serialzer = RequestOtpSerializer(data=request.data)
+        serialzer.is_valid(raise_exception=True)
+        email = serialzer.validated_data["email"]
+        Otp.objects.filter(email__iexact=email,is_used=False).update(is_used = ~F("is_used"))
+        otp = generate_otp()
+
+        Otp.objects.create(email=email, otp_hash=hash_otp(otp), expires_at=timezone.now() + timedelta(minutes=5))
+        print(otp)
+        send_otp_email(email, otp)
+
+        return Response(status=status.HTTP_201_CREATED)
+
+    @action(
+        methods= ["post"],
+        detail=False,
+        url_name="verify otp",
+        url_path="verify-otp"
+    )
+    def verify_otp(self,request):
+        serilizer = VerifyOtpSerializer(data=request.data)
+        serilizer.is_valid(raise_exception=True)
+        email = serilizer.validated_data["email"]
+        otp = serilizer.validated_data["otp"]
+
+        record = Otp.objects.filter(email=email, is_used=False).order_by("-created_at").first()
+
+        if not record:
+             return Response(
+                {"detail": "Invalid or expired OTP."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if timezone.now() >= record.expires_at:
+            record.is_used = True
+            record.save()
+
+            return Response(
+                {"detail": "Invalid or expired OTP."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        
+
+        if record.attempts >= 3:
+            record.is_used = True
+            record.save()
+
+            return Response(
+                {"detail": "Too many attempts."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        record.attempts += 1
+        record.save()
+
+        if not secrets.compare_digest(record.otp_hash, hash_otp(otp)):
+            return Response(
+                {"detail": "Invalid or expired OTP."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        record.is_used = True
+        record.save()
+
+        User = get_user_model()
+
+        user = User.objects.filter(
+            email=email,
+        )
+        if not user:
+            return Response(
+                {"detail" : "Please First create a User with email"},
+                status=status.HTTP_406_NOT_ACCEPTABLE
+            )
+
+        login(request, user.first())
+
+        return Response(
+            {"detail": "Login successful."},
+            status=status.HTTP_200_OK,
+        )
+    

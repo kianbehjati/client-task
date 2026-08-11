@@ -1,3 +1,28 @@
 from django.db import models
+class Client(models.Model):
+    name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    email = models.EmailField(unique=True, null=True, blank=True)
+    phone_number = models.CharField(max_length=15, null=True ,blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    telegram_id = models.CharField(max_length=100, blank=True, null=True)
+    
+    def __str__(self):
+        return self.name + self.last_name
 
-# Create your models here.
+class Otp(models.Model):
+
+    email = models.EmailField()
+    otp_hash = models.CharField(max_length=128)
+    expires_at = models.DateTimeField()
+    attempts = models.PositiveSmallIntegerField(default=0)
+    is_used = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["email", "created_at"]),
+        ]
+
+    def __str__(self):
+        return self.email
