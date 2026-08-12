@@ -7,6 +7,8 @@ from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.parsers import MultiPartParser
+from rest_framework.views import APIView
 
 from django.http.response import HttpResponseForbidden, HttpResponse, HttpResponseNotFound
 from django.contrib.auth.decorators import login_required
@@ -21,6 +23,7 @@ import io
 import hashlib
 import secrets
 from datetime import timedelta
+import csv
 
 def generate_otp():
     return f"{secrets.randbelow(1000000):06d}"
@@ -179,4 +182,30 @@ class AuthenticationViewSet(GenericViewSet):
             {"detail": "Login successful."},
             status=status.HTTP_200_OK,
         )
-    
+
+class CSVUploadView(APIView): #APIView because there is no serializer for this view and we are not using any model
+
+    parser_classes = [MultiPartParser]
+
+    def post(self, request):
+        csv_file = request.FILES.get("file")
+        if not csv_file:
+            return Response({"error": "No file provided."}, status=status.HTTP_400_BAD_REQUEST)
+        text_file = io.TextIOWrapper(
+            csv_file.file,
+            encoding="utf-8-sig"
+        )
+        reader = csv.DictReader(text_file)
+        if set(reader.fieldnames) != set(["name", "last_name", "email", "phone_number", "telegram_id"]): #has a bug if the csv file has extra columns(with same names) it will not work
+            return Response({"error": "Invalid CSV format."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # can use bulK_create but it will not call the save method of the model so we are using create method in a loop
+        for row in reader:
+            Client.objects.get_or_create(
+                name=row["name"],
+                last_name=row["last_name"],
+                email=row["email"],
+                phone_number=row["phone_number"],
+                telegram_id=row["telegram_id"]
+            )
+        return Response(status=status.HTTP_201_CREATED)
