@@ -1,7 +1,7 @@
 from .serializer import ClientSerializer,RequestOtpSerializer,VerifyOtpSerializer
 from .models import Client, Otp
 
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAdminUser
 from rest_framework.reverse import reverse
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework.decorators import action
@@ -18,6 +18,7 @@ from django.db.models import F
 from django.utils import timezone
 from django.contrib.auth import get_user_model, login
 from django import urls
+from django_filters.rest_framework import DjangoFilterBackend
 
 from django_q.tasks import async_task
 import qrcode
@@ -79,16 +80,11 @@ class ClientViewSet(ModelViewSet):
     """
     serializer_class = ClientSerializer
     queryset = Client.objects.all()
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['name','last_name','created_at'] # custom filter set for iexact and contains searchs
+    # pagination can be useful
 
-    def get_queryset(self):
-        if self.request.user.is_staff:
-            self.queryset = Client.objects.all()
-        if not self.request.user.is_staff:
-            self.queryset = Client.objects.none()
-        return super().get_queryset()
-    def get_permissions(self):
-        return super().get_permissions()
 
 
 

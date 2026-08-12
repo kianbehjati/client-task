@@ -3,6 +3,7 @@ attrs==26.1.0
 colorama==0.4.6
 django==6.1
 django-environ==0.14.0
+django-filter==26.1
 django-picklefield==3.4.0
 django-q2==1.10.0
 djangorestframework==3.18.0

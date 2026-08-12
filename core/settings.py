@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_q',
     "drf_spectacular",
+    'django_filters',
     ###
     'client',
 ]
@@ -127,6 +128,7 @@ REST_FRAMEWORK = {
         "user": "1000/hour",
     },
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
 }
 
 ### django_SPECTACULAR (for swagger)
