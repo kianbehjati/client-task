@@ -30,7 +30,7 @@ import hashlib
 import secrets
 from datetime import timedelta
 import csv
-
+from kavenegar import *
 
 ### internal functions ###
 def generate_otp() -> str:
@@ -124,6 +124,18 @@ class AuthenticationViewSet(GenericViewSet):
         )
         print(otp)
         async_task(send_otp_email, email, otp)
+
+        ### kavenegar ###
+        '''
+        api = KavenegarAPI('API Key')
+        params = {
+            'receptor': '09xxxxxxxxx',#multiple mobile number, split by comma
+            'message': f"Your verification code is: {otp}\nThis code expires in 5 minutes.",
+        } 
+        async_task(api.sms_send, params)
+            or
+        api.sms_send(params)
+        '''
 
         return Response(status=status.HTTP_201_CREATED)
 
