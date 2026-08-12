@@ -2,11 +2,10 @@ from pathlib import Path
 import environ
 import os
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-env = environ.Env()
 
+env = environ.Env()
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 SECRET_KEY = env("SECRET_KEY")
@@ -66,7 +65,7 @@ DATABASES = {
         'NAME': 'mydb',
         'USER': env("DB_USER"),
         'PASSWORD': env("DB_PASSWORD"),
-        'HOST': 'db',
+        'HOST': 'db', # docker internal network
         'PORT': 5432,
     }
 }
@@ -96,6 +95,7 @@ USE_I18N = True
 
 USE_TZ = True
 
+### static and media ###
 STATIC_URL = 'static/'
 
 STATIC_ROOT = BASE_DIR / "static"
@@ -108,11 +108,13 @@ MEDIA_URL = "media/"
 
 MEDIA_ROOT = BASE_DIR / "static" / "media"
 
+### django q2 ###
 Q_CLUSTER = {
    'workers': 4,
    'orm': 'default',
 }
 
+### rest framework ###
 REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_CLASSES": [
         "rest_framework.throttling.AnonRateThrottle",
@@ -125,6 +127,7 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
+### django_SPECTACULAR (for swagger)
 SPECTACULAR_SETTINGS = {
     "TITLE": "Client API",
     "DESCRIPTION": "API documentation",

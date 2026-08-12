@@ -17,6 +17,7 @@ from django.conf import settings
 from django.db.models import F
 from django.utils import timezone
 from django.contrib.auth import get_user_model, login
+from django import urls
 
 import qrcode
 import io
@@ -25,24 +26,51 @@ import secrets
 from datetime import timedelta
 import csv
 
-def generate_otp():
+### internal functions ###
+def generate_otp() -> str:
     return f"{secrets.randbelow(1000000):06d}"
 
-def hash_otp(otp):
+def hash_otp(otp: str) -> str:
     return hashlib.sha256(
         f"{settings.SECRET_KEY}:{otp}".encode()
     ).hexdigest()
 
-def send_otp_email(email, otp):
+def send_otp_email(email: str, otp: str) -> None:
     send_mail(
         subject="Your verification code",
         message=f"Your verification code is: {otp}\n"
                 "This code expires in 5 minutes.",
         from_email=settings.DEFAULT_FROM_EMAIL,
         recipient_list=[email],
-        fail_silently=True
+        fail_silently=True # because there is no email backend
     )
 
+def qr_code(request,pk):
+    # isAdmin permission 
+    if not request.user or not request.user.is_staff:
+        return HttpResponseForbidden()
+    
+    else:
+        client = Client.objects.filter(id=pk).only('id')
+        if not client.exists():
+            return HttpResponseNotFound("No user was found with this unique ID")
+        else:
+            url = reverse('client-detail',kwargs={"pk":pk},request=request)
+    
+
+    qr = qrcode.make(url)
+
+    buffer = io.BytesIO()
+    qr.save(buffer, format="PNG")
+
+
+    return HttpResponse(
+        buffer.getvalue(),
+        content_type="image/png",
+    )
+
+
+### API VIEWS ###
 class ClientViewSet(ModelViewSet):
     """
     /api/Client/<PK> -> Update/Delete Client\n
@@ -61,30 +89,10 @@ class ClientViewSet(ModelViewSet):
     def get_permissions(self):
         return super().get_permissions()
 
-@login_required(login_url='/login')
-def qr_code(request,pk):
-    if request.user.is_staff:
-        client = Client.objects.filter(id=pk).only('id')
-        if not client.exists():
-            return HttpResponseNotFound("No user was found with this unique ID")
-        else:
-            url = reverse('client-detail',kwargs={"pk":pk},request=request)
-    else:
-        return HttpResponseForbidden()
 
-    qr = qrcode.make(url)
-
-    buffer = io.BytesIO()
-    qr.save(buffer, format="PNG")
-
-
-    return HttpResponse(
-        buffer.getvalue(),
-        content_type="image/png",
-    )
 
 class AuthenticationViewSet(GenericViewSet):
-    serializer_class = RequestOtpSerializer # just to bypass error
+    serializer_class = RequestOtpSerializer # just to bypass error needs to be replaced by DefaultSerializer
 
     def get_serializer_class(self):
         if self.action == "request_otp":
@@ -105,7 +113,7 @@ class AuthenticationViewSet(GenericViewSet):
         serialzer = RequestOtpSerializer(data=request.data)
         serialzer.is_valid(raise_exception=True)
         email = serialzer.validated_data["email"]
-        Otp.objects.filter(email__iexact=email,is_used=False).update(is_used = ~F("is_used"))
+        Otp.objects.filter(email__iexact=email,is_used=False).update(is_used = ~F("is_used")) # invalidate previous OTPs
         otp = generate_otp()
 
         Otp.objects.create(email=email, otp_hash=hash_otp(otp), expires_at=timezone.now() + timedelta(minutes=5))
@@ -196,7 +204,7 @@ class CSVUploadView(APIView): #APIView because there is no serializer for this v
             encoding="utf-8-sig"
         )
         reader = csv.DictReader(text_file)
-        if set(reader.fieldnames) != set(["name", "last_name", "email", "phone_number", "telegram_id"]): #has a bug if the csv file has extra columns(with same names) it will not work
+        if set(reader.fieldnames) != set(["name", "last_name", "email", "phone_number", "telegram_id"]): #has a bug if the csv file has extra columns(with same names)
             return Response({"error": "Invalid CSV format."}, status=status.HTTP_400_BAD_REQUEST)
 
         # can use bulK_create but it will not call the save method of the model so we are using create method in a loop

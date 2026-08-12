@@ -13,7 +13,7 @@ class Client(models.Model):
 class Otp(models.Model):
 
     email = models.EmailField()
-    otp_hash = models.CharField(max_length=128)
+    otp_hash = models.CharField(max_length=128) # storing hash for security
     expires_at = models.DateTimeField()
     attempts = models.PositiveSmallIntegerField(default=0)
     is_used = models.BooleanField(default=False)
