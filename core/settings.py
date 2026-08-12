@@ -110,8 +110,10 @@ MEDIA_ROOT = BASE_DIR / "static" / "media"
 
 ### django q2 ###
 Q_CLUSTER = {
-   'workers': 4,
-   'orm': 'default',
+    'timeout': 90,
+    'retry': 120,
+    'workers': 4,
+    'orm': 'default',
 }
 
 ### rest framework ###
@@ -133,3 +135,13 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "API documentation",
     "VERSION": "1.0.0",
 }
+
+### Email Settings ###
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.example.com'  
+EMAIL_PORT = 587  
+EMAIL_USE_TLS = True  
+EMAIL_HOST_USER = 'your_email@example.com'  
+EMAIL_HOST_PASSWORD = 'your_password'  
+EMAIL_USE_SSL = False 
+DEFAULT_FROM_EMAIL = 'your_email@example.com' 

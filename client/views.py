@@ -19,6 +19,7 @@ from django.utils import timezone
 from django.contrib.auth import get_user_model, login
 from django import urls
 
+from django_q.tasks import async_task
 import qrcode
 import io
 import hashlib
@@ -118,7 +119,7 @@ class AuthenticationViewSet(GenericViewSet):
 
         Otp.objects.create(email=email, otp_hash=hash_otp(otp), expires_at=timezone.now() + timedelta(minutes=5))
         print(otp)
-        send_otp_email(email, otp)
+        async_task(send_otp_email, email, otp)
 
         return Response(status=status.HTTP_201_CREATED)
 
