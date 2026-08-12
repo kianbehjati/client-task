@@ -4,33 +4,32 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('client', '0002_remove_client_created_at_remove_client_email_and_more'),
+        ("client", "0002_remove_client_created_at_remove_client_email_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='client',
-            name='email',
+            model_name="client",
+            name="email",
             field=models.EmailField(blank=True, max_length=254, null=True, unique=True),
         ),
         migrations.AddField(
-            model_name='client',
-            name='last_name',
-            field=models.CharField(default='test', max_length=30),
+            model_name="client",
+            name="last_name",
+            field=models.CharField(default="test", max_length=30),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='client',
-            name='name',
-            field=models.CharField(default='test', max_length=30),
+            model_name="client",
+            name="name",
+            field=models.CharField(default="test", max_length=30),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='client',
-            name='username',
-            field=models.CharField(default='test', max_length=150, unique=True),
+            model_name="client",
+            name="username",
+            field=models.CharField(default="test", max_length=150, unique=True),
             preserve_default=False,
         ),
     ]

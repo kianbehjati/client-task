@@ -4,25 +4,37 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('client', '0006_alter_client_phone_number'),
+        ("client", "0006_alter_client_phone_number"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Otp',
+            name="Otp",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('email', models.EmailField(max_length=254)),
-                ('otp_hash', models.CharField(max_length=128)),
-                ('expires_at', models.DateTimeField()),
-                ('attempts', models.PositiveSmallIntegerField(default=0)),
-                ('is_used', models.BooleanField(default=False)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("email", models.EmailField(max_length=254)),
+                ("otp_hash", models.CharField(max_length=128)),
+                ("expires_at", models.DateTimeField()),
+                ("attempts", models.PositiveSmallIntegerField(default=0)),
+                ("is_used", models.BooleanField(default=False)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
             ],
             options={
-                'indexes': [models.Index(fields=['email', 'created_at'], name='client_otp_email_ace402_idx')],
+                "indexes": [
+                    models.Index(
+                        fields=["email", "created_at"],
+                        name="client_otp_email_ace402_idx",
+                    )
+                ],
             },
         ),
     ]

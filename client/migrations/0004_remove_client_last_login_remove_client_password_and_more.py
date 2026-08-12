@@ -5,38 +5,39 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('client', '0003_client_email_client_last_name_client_name_and_more'),
+        ("client", "0003_client_email_client_last_name_client_name_and_more"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='client',
-            name='last_login',
+            model_name="client",
+            name="last_login",
         ),
         migrations.RemoveField(
-            model_name='client',
-            name='password',
+            model_name="client",
+            name="password",
         ),
         migrations.RemoveField(
-            model_name='client',
-            name='username',
+            model_name="client",
+            name="username",
         ),
         migrations.AddField(
-            model_name='client',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, default=django.utils.timezone.now),
+            model_name="client",
+            name="created_at",
+            field=models.DateTimeField(
+                auto_now_add=True, default=django.utils.timezone.now
+            ),
             preserve_default=False,
         ),
         migrations.AlterField(
-            model_name='client',
-            name='last_name',
+            model_name="client",
+            name="last_name",
             field=models.CharField(max_length=100),
         ),
         migrations.AlterField(
-            model_name='client',
-            name='name',
+            model_name="client",
+            name="name",
             field=models.CharField(max_length=100),
         ),
     ]

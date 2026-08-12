@@ -4,37 +4,40 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('client', '0001_initial'),
+        ("client", "0001_initial"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='client',
-            name='created_at',
+            model_name="client",
+            name="created_at",
         ),
         migrations.RemoveField(
-            model_name='client',
-            name='email',
+            model_name="client",
+            name="email",
         ),
         migrations.RemoveField(
-            model_name='client',
-            name='last_name',
+            model_name="client",
+            name="last_name",
         ),
         migrations.RemoveField(
-            model_name='client',
-            name='name',
+            model_name="client",
+            name="name",
         ),
         migrations.AddField(
-            model_name='client',
-            name='last_login',
-            field=models.DateTimeField(blank=True, null=True, verbose_name='last login'),
+            model_name="client",
+            name="last_login",
+            field=models.DateTimeField(
+                blank=True, null=True, verbose_name="last login"
+            ),
         ),
         migrations.AddField(
-            model_name='client',
-            name='password',
-            field=models.CharField(default='hello', max_length=128, verbose_name='password'),
+            model_name="client",
+            name="password",
+            field=models.CharField(
+                default="hello", max_length=128, verbose_name="password"
+            ),
             preserve_default=False,
         ),
     ]
