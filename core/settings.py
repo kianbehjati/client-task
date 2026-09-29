@@ -23,7 +23,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
-    "django_q",
     "drf_spectacular",
     "django_filters",
     ###
@@ -109,13 +108,12 @@ MEDIA_URL = "media/"
 
 MEDIA_ROOT = BASE_DIR / "static" / "media"
 
-### django q2 ###
-Q_CLUSTER = {
-    "timeout": 90,
-    "retry": 120,
-    "workers": 4,
-    "orm": "default",
-}
+### celery ###
+CELERY_BROKER_URL = 'redis://redis:6379/0'
+
+CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
+
+CELERY_TIMEZONE = 'UTC'
 
 ### rest framework ###
 REST_FRAMEWORK = {
