@@ -1,36 +1,34 @@
-from .serializer import ClientSerializer, RequestOtpSerializer, VerifyOtpSerializer
-from .models import Client, Otp
-
-from rest_framework.permissions import IsAdminUser
-from rest_framework.reverse import reverse
-from rest_framework.viewsets import ModelViewSet, GenericViewSet
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.parsers import MultiPartParser
-from rest_framework.views import APIView
-
-from django.http.response import (
-    HttpResponseForbidden,
-    HttpResponse,
-    HttpResponseNotFound,
-)
-
-from django.core.mail import send_mail
-from django.conf import settings
-from django.db.models import F
-from django.utils import timezone
-from django.contrib.auth import get_user_model, login
-from django_filters.rest_framework import DjangoFilterBackend
-
-from django_q.tasks import async_task
-import qrcode
-import io
+import csv
 import hashlib
+import io
 import secrets
 from datetime import timedelta
-import csv
+
+import qrcode
+from django.conf import settings
+from django.contrib.auth import get_user_model, login
+from django.db.models import F
+from django.http.response import (
+    HttpResponse,
+    HttpResponseForbidden,
+    HttpResponseNotFound,
+)
+from django.utils import timezone
+from django_filters.rest_framework import DjangoFilterBackend
 from kavenegar import *
+from rest_framework import status
+from rest_framework.decorators import action
+from rest_framework.parsers import MultiPartParser
+from rest_framework.permissions import IsAdminUser
+from rest_framework.response import Response
+from rest_framework.reverse import reverse
+from rest_framework.views import APIView
+from rest_framework.viewsets import GenericViewSet, ModelViewSet
+
+from .models import Client, Otp
+from .serializer import ClientSerializer, RequestOtpSerializer, VerifyOtpSerializer
+from .tasks import send_otp_email
+
 
 ### internal functions ###
 def generate_otp() -> str:
@@ -39,16 +37,6 @@ def generate_otp() -> str:
 
 def hash_otp(otp: str) -> str:
     return hashlib.sha256(f"{settings.SECRET_KEY}:{otp}".encode()).hexdigest()
-
-
-def send_otp_email(email: str, otp: str) -> None:
-    send_mail(
-        subject="Your verification code",
-        message=f"Your verification code is: {otp}\nThis code expires in 5 minutes.",
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[email],
-        fail_silently=True,  # because there is no email backend
-    )
 
 
 def qr_code(request, pk):
@@ -123,10 +111,11 @@ class AuthenticationViewSet(GenericViewSet):
             expires_at=timezone.now() + timedelta(minutes=5),
         )
         print(otp)
-        async_task(send_otp_email, email, otp)
+        # async_task(send_otp_email, email, otp) -> q2
+        send_otp_email.delay_on_commit(email, otp)
 
         ### kavenegar ###
-        '''
+        """
         api = KavenegarAPI('API Key')
         params = {
             'receptor': '09xxxxxxxxx',#multiple mobile number, split by comma
@@ -135,7 +124,7 @@ class AuthenticationViewSet(GenericViewSet):
         async_task(api.sms_send, params)
             or
         api.sms_send(params)
-        '''
+        """
 
         return Response(status=status.HTTP_201_CREATED)
 
@@ -222,9 +211,13 @@ class CSVUploadView(
             )
         text_file = io.TextIOWrapper(csv_file.file, encoding="utf-8-sig")
         reader = csv.DictReader(text_file)
-        if set(reader.fieldnames) != set(
-            ["name", "last_name", "email", "phone_number", "telegram_id"]
-        ):  # has a bug if the csv file has extra columns(with same names)
+        if set(reader.fieldnames) != {
+            "name",
+            "last_name",
+            "email",
+            "phone_number",
+            "telegram_id",
+        }:  # has a bug if the csv file has extra columns(with same names)
             return Response(
                 {"error": "Invalid CSV format."}, status=status.HTTP_400_BAD_REQUEST
             )
