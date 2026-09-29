@@ -17,6 +17,9 @@ services:
       - db_user
       - db_password
     
+  redis:
+    image: redis:8.8.3-alpine3.23
+    
   web:
 
     build: .
@@ -27,6 +30,8 @@ services:
       db:
         condition: service_healthy
         restart: true
+      redis:
+        condition: service_started
     ports:
       - "8000:8000"
     command: python manage.py runserver 0.0.0.0:8000
@@ -38,7 +43,7 @@ services:
       db:
         condition: service_healthy
         restart: true
-    command: sh -c "python manage.py migrate && python manage.py qcluster"
+    command: celery -A core worker -l info
 
 secrets:
   db_user:
