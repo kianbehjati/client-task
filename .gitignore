@@ -2,3 +2,4 @@ venv
 pg_data
 __pycache__
 .env
+todo
