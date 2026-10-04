@@ -43,8 +43,16 @@ services:
       db:
         condition: service_healthy
         restart: true
-    command: celery -A core worker -l info
-
+    command: celery -A core worker -l info -Q celery,celery:1,celery:2,celery:3
+  beat:
+    build: .
+    volumes:
+      - .:/code
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+    command: celery -A core beat -l INFO
 secrets:
   db_user:
     file: ./db_user.txt

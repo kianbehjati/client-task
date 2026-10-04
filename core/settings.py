@@ -27,6 +27,9 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "django_filters",
     "django_celery_results",
+    "django_celery_beat",
+    "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
     ###
     "client",
 ]
@@ -115,7 +118,10 @@ CELERY_BROKER_URL = "redis://redis:6379/0"
 
 CELERY_RESULT_BACKEND = "django-db"
 
-CELERY_TIMEZONE = "UTC"
+CELERY_TIMEZONE = "Asia/Tehran"
+
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+
 
 ### rest framework ###
 REST_FRAMEWORK = {

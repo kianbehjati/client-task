@@ -3,8 +3,13 @@ from django.conf import settings
 from django.core.mail import send_mail
 
 
-@shared_task
-def send_otp_email(email: str, otp: str) -> str:
+@shared_task(
+    default_retry_delay=1 * 60,
+    retry_kwargs={"max_retries": 2},
+    autoretry_for=(ValueError,),
+)
+def send_otp_email(email: str, otp: str, queue="celery:2") -> str:
+    # raise ValueError("error")
     send_mail(
         subject="Your verification code",
         message=f"Your verification code is: {otp}\nThis code expires in 5 minutes.",
