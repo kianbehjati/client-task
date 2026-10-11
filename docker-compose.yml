@@ -53,6 +53,13 @@ services:
         condition: service_healthy
         restart: true
     command: celery -A core beat -l INFO
+
+  rabbitmq:
+    image: rabbitmq:3.13.7-management-alpine
+
+    ports:
+      - "15672:15672"
+
 secrets:
   db_user:
     file: ./db_user.txt
