@@ -1,3 +1,5 @@
 [tool.ruff.lint]
 ignore = ["RUF012"]
 unfixable = ["F401"]
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "core.settings"
