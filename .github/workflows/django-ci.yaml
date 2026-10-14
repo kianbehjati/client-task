@@ -10,6 +10,8 @@ jobs:
       - name: Run tests
         env:
           SECRET_KEY: ${{secrets.SECRET_KEY}}
+          DB_USER: ${{secrets.DB_USER}}
+          DB_PASSWORD: ${{secrets.DB_PASSWORD}}
           DEBUG: True
         run: docker compose exec web pytest
       - name: Stop services
