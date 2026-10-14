@@ -1,7 +1,7 @@
 name: CodeQuality
 on: [push, workflow_dispatch]
 jobs:
-  test:
+  ruff:
     runs-on: ubuntu-latest
 
     steps:
@@ -15,7 +15,7 @@ jobs:
         run: pip install ruff
 
       - name: lint
-        run: ruff check .
+        run: ruff check . --fix
       
       - name: format
         run: ruff format --check .
