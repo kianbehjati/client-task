@@ -3,17 +3,28 @@ on: [push, workflow_dispatch]
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      SECRET_KEY: ${{secrets.SECRET_KEY}}
+      DB_USER: ${{secrets.DB_USER}}
+      DB_PASSWORD: ${{secrets.DB_PASSWORD}}
+      DEBUG: True
+      
     steps:
       - uses: actions/checkout@v4
       - name: Build and start services
         run: docker compose up -d --build
       - name: Run tests
-        env:
-          SECRET_KEY: ${{secrets.SECRET_KEY}}
-          DB_USER: ${{secrets.DB_USER}}
-          DB_PASSWORD: ${{secrets.DB_PASSWORD}}
-          DEBUG: True
+        
         run: docker compose exec web pytest
+      - name: Run tests
+        run: docker compose exec -T web pytest -v
+
+      - name: Inspect containers
+        if: always()
+        run: |
+          docker compose ps -a
+          docker compose logs --tail=200 web
+          docker stats --no-stream || true
       - name: Stop services
         if: always()
         run: docker compose down -v
