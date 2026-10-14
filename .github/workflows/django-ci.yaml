@@ -11,7 +11,7 @@ jobs:
       - name: Build and start services
         run: docker compose up -d --build
       - name: Run tests
-        run: docker compose exec -T web pytest
+        run: docker compose exec web pytest
       - name: Stop services
         if: always()
         run: docker compose down -v
