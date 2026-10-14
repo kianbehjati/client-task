@@ -8,6 +8,9 @@ jobs:
       - name: Build and start services
         run: docker compose up -d --build
       - name: Run tests
+        env:
+          SECRET_KEY: ${{secrets.SECRET_KEY}}
+          DEBUG: True
         run: docker compose exec web pytest
       - name: Stop services
         if: always()
