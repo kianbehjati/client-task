@@ -5,7 +5,9 @@ class Client(models.Model):
     name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     email = models.EmailField(unique=True, null=True, blank=True)
-    phone_number = models.CharField(max_length=15, null=True, blank=True, unique=True) # needs validationd
+    phone_number = models.CharField(
+        max_length=15, null=True, blank=True, unique=True
+    )  # needs validationd
     created_at = models.DateTimeField(auto_now_add=True)
     telegram_id = models.CharField(max_length=100, blank=True, null=True, unique=True)
 

@@ -1,6 +1,7 @@
-from rest_framework.routers import DefaultRouter
-from .views import ClientViewSet, qr_code, AuthenticationViewSet, CSVUploadView
 from django.urls import path
+from rest_framework.routers import DefaultRouter
+
+from .views import AuthenticationViewSet, ClientViewSet, CSVUploadView, qr_code
 
 router = DefaultRouter()
 router.register("client", ClientViewSet)
