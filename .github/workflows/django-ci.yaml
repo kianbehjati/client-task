@@ -9,7 +9,7 @@ jobs:
         with:
           python-version: 3.14
       - run: pip install ruff
-      - run: pip install -r requirements.txr
+      - run: pip install -r requirements.txt
       - run: pytest
       - run: ruff check .
       - run: ruff format --check .
